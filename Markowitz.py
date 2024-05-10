@@ -67,6 +67,10 @@ class EqualWeightPortfolio:
         TODO: Complete Task 1 Below
         """
 
+        for asset in assets:
+            self.portfolio_weights[asset] = 1 / len(assets)
+        self.portfolio_weights['SPY'] = 0
+
         """
         TODO: Complete Task 1 Above
         """
@@ -117,6 +121,24 @@ class RiskParityPortfolio:
         """
         TODO: Complete Task 2 Below
         """
+
+        for date_index, date in enumerate(df.index):
+            if date_index < self.lookback + 1:
+                continue
+            else:
+                # Calculate volatility based on the lookback period
+                volatilities = df_returns.iloc[date_index - self.lookback : date_index].std()
+
+            # Calculate inverse volatility weights
+            inv_vol_weights = 1 / volatilities
+            inv_vol_weights[self.exclude] = 0
+            sum_inv_vol = inv_vol_weights.sum()
+
+            # Normalize weights to ensure they sum up to 1
+            weights = inv_vol_weights / sum_inv_vol
+
+            # Assign weights to the portfolio_weights DataFrame
+            self.portfolio_weights.loc[date] = weights
 
         """
         TODO: Complete Task 2 Above
@@ -192,8 +214,19 @@ class MeanVariancePortfolio:
 
                 # Sample Code: Initialize Decision w and the Objective
                 # NOTE: You can modify the following code
-                w = model.addMVar(n, name="w", ub=1)
-                model.setObjective(w.sum(), gp.GRB.MAXIMIZE)
+                
+                # Define decision variables
+                w = model.addMVar(n, name="w", lb=0, ub=1)
+
+                # Set objective function
+                obj = w @ mu - (gamma / 2) * (w @ Sigma @ w)
+                model.setObjective(obj, gp.GRB.MAXIMIZE)
+
+                # Add constraints
+                model.addConstr(w.sum() == 1, name="budget_constraint")
+
+                # Solve the optimization problem
+                model.optimize()
 
                 """
                 TODO: Complete Task 3 Below
