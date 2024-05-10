@@ -75,6 +75,23 @@ class MyPortfolio:
         TODO: Complete Task 4 Below
         """
 
+        self.portfolio_weights[self.exclude] = 0
+        df_returns = df.pct_change().fillna(0)
+        for date_index, date in enumerate(df.index):
+            postive_returns = {}
+            for asset in assets:
+                ret = df_returns.iloc[date_index][asset]
+                if ret > 0:
+                    postive_returns[asset] = ret
+            ret_sum = sum(postive_returns.values())
+            if ret_sum == 0:
+                continue
+            for asset in assets:
+                if asset in postive_returns:
+                    self.portfolio_weights.loc[date, asset] = postive_returns[asset] / ret_sum
+                else:
+                   self.portfolio_weights.loc[date, asset] = 0
+
         """
         TODO: Complete Task 4 Above
         """
